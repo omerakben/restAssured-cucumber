@@ -41,7 +41,6 @@
             <version>2.13.2.2</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind -->
-
         <!-- Cucumber dependencies -->
         <dependency>
             <groupId>io.cucumber</groupId>

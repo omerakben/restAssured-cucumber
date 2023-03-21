@@ -12,10 +12,4 @@ public class ErrorResponse {
     @JsonProperty("error")
     private String error;
 
-    @Override
-    public String toString() {
-        return "ErrorResponse{" +
-                "error='" + error + '\'' +
-                '}';
-    }
 }

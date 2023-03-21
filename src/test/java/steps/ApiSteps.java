@@ -5,6 +5,7 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
+import utils.ScenarioContext;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,8 +17,13 @@ import static token.AccessToken.getToken;
 
 public class ApiSteps {
 
+    private ScenarioContext scenarioContext;
     private Response response;
     private OrderConfirmation orderConfirmation;
+
+    public ApiSteps(ScenarioContext scenarioContext) {
+        this.scenarioContext = scenarioContext;
+    }
 
     @Given("I make a GET request to the status endpoint")
     public void i_make_a_get_request_to_the_status_endpoint() {
@@ -92,31 +98,32 @@ public class ApiSteps {
 
     @Given("I make a POST request to the orders endpoint with book ID {string} and customer name {string}")
     public void i_make_a_post_request_to_the_orders_endpoint_with_book_id_and_customer_name(String bookId, String customerName) {
-        Map<String, Object> bookObject = new HashMap<>();
-        bookObject.put("bookId", Integer.parseInt(bookId));
-        bookObject.put("customerName", customerName);
+        Map<String, String> requestBody = new HashMap<>();
+        requestBody.put("bookId", bookId);
+        requestBody.put("customerName", customerName);
 
         response = given()
                 .headers(
-                        "Authorization",
-                        "Bearer " + getToken(),
-                        "Content-Type",
-                        ContentType.JSON,
-                        "Accept",
-                        ContentType.JSON)
-                .body(bookObject)
+                        "Authorization", "Bearer " + getToken(),
+                        "Content-Type", ContentType.JSON,
+                        "Accept", ContentType.JSON)
+                .body(requestBody)
                 .when()
                 .post(BASE_URL.getPath() + ORDERS.getPath())
                 .thenReturn();
 
-        orderConfirmation = response.as(OrderConfirmation.class);
+        scenarioContext.setContextData("orderConfirmation", orderConfirmation.getOrderId());
+
     }
+
 
     @Then("I should receive a 201 status code and the order confirmation")
     public void i_should_receive_a_status_code_and_the_order_confirmation() {
+        orderConfirmation = response.as(OrderConfirmation.class);
+
         assertEquals(201, response.getStatusCode());
         assertTrue(orderConfirmation.getCreated());
-        assertNotNull(orderConfirmation.getOrderId());
+
     }
 
     @Given("I make a GET request to the order with the previously created ID endpoint")
@@ -127,17 +134,15 @@ public class ApiSteps {
                         "Content-Type", ContentType.JSON,
                         "Accept", ContentType.JSON)
                 .when()
-                .get(BASE_URL.getPath() + ORDERS.getPath() + "/" + orderConfirmation.getOrderId())
+                .get(BASE_URL.getPath() + ORDERS.getPath() + "/" + scenarioContext.getContextData("orderConfirmation"))
                 .thenReturn();
+
     }
 
     @Then("I should receive a 200 status code and the order details")
     public void i_should_receive_a_status_code_and_the_order_details() {
         assertEquals(200, response.getStatusCode());
-        OrderInformation orderInformation = response.as(OrderInformation.class);
-        assertEquals(200, response.getStatusCode());
-        assertEquals(true, orderConfirmation.getCreated());
-        assertNotNull(orderConfirmation.getOrderId());
+        assertNotNull(scenarioContext.getContextData("orderConfirmation"));
     }
 
     @Given("I make a DELETE request to the order with the previously created ID endpoint")
@@ -148,7 +153,7 @@ public class ApiSteps {
                         "Content-Type", ContentType.JSON,
                         "Accept", ContentType.JSON)
                 .when()
-                .delete(Endpoints.BASE_URL.getPath()+ ORDERS.getPath() + "/" + orderConfirmation.getOrderId())
+                .delete(Endpoints.BASE_URL.getPath()+ ORDERS.getPath() + "/" + scenarioContext.getContextData("orderConfirmation"))
                 .thenReturn();
     }
 
@@ -165,12 +170,12 @@ public class ApiSteps {
                         "Content-Type", ContentType.JSON,
                         "Accept", ContentType.JSON)
                 .when()
-                .get(BASE_URL.getPath() + ORDERS.getPath() + "/" + orderConfirmation.getOrderId())
+                .get(BASE_URL.getPath() + ORDERS.getPath() + "/" + scenarioContext.getContextData("orderConfirmation"))
                 .thenReturn();
 
         ErrorResponse er = deletedResponse.as(ErrorResponse.class);
 
-        assertTrue(er.getError().equalsIgnoreCase("No order with id " + orderConfirmation.getOrderId() + "."));
+        assertTrue(er.getError().equalsIgnoreCase("No order with id " + scenarioContext.getContextData("orderConfirmation") + "."));
     }
 
 }

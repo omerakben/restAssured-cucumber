@@ -27,3 +27,11 @@ Feature: API testing
     Given I make a DELETE request to the order with the previously created ID endpoint
     Then I should receive a 204 status code
     And I should not be able to retrieve the deleted order
+
+
+    Scenario: Shrinking the patient details page to one row
+      Given as a Nurse credentials go to the Xsolispage
+      And Select any patient
+      And Click to the patient details page
+      And Scroll down to the page
+      Then Shirnk on the top row will display
